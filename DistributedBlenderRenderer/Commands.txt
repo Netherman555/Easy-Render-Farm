@@ -1,0 +1,66 @@
+These are the valid commands for the rendering server.
+Since there isn't a defined standard for anything like this that I'm aware of, this is specific to this program.
+Feel free to use this for your own programs if you wish.
+
+Server Contexts:
+
+11XX Codes: Introduction Codes
+
+ - 1101 : Connection Confirmation
+          This can be sent by the client or server.  When the server receives this, it means that there is a client attempting to establish a connection.
+          If the connection is accepted, than the same code will be sent back to the client.
+
+ - 1102 : Connection Refused
+          In the event that the server receives a 1101, but is unwilling to register them, than the server will send a 1102 to refuse the connection, followed
+          by a termination of the connection.
+
+ - 1103 : Login Required
+          This is sent when the server is willing to accept a client after they have sent an 1101, but they require a login for this current contest.  There 
+          is not currently any support for logins to servers, but this is allocated for when it is allowed.  This code will also be sent after the username
+          and then password are sent.  The interaction would go like this:
+
+          Connection -> Client sends 1101 -> Server sends 1103 -> Client sends username -> Server sends 1103 -> Client sends password (hashed) -> Server sends either 1101 or 1102.
+
+21XX Codes: Queue Codes
+
+ - 2201 : Queue Joined
+          This can be sent by the client or server.  When the server receives this, it means that the client (who has already been accepted) is requesting
+          to join the ongoing queue.  If the server accepts, then 2201 will be sent to the client, and they will be able to receive frames from then on.
+
+ - 2202 : Queue Join Refused
+          In the event the server is unwilling to allow the client to enter the queue at the current time.  They can try again, but they are not currently in the queue.
+
+31XX Codes: Stream Codes
+
+ - 3101 : File Request
+          This is sent by the server to all clients that are currently in the queue when they wish to send a .blend file.  This file would be used to create
+          the frames for later requests.  A project UUID is also sent.
+
+          The client can also send this in order to send their rendered frame back to the server.
+
+          Server sends 3101 -> Client sends 3101 (accept) -> Server sends .blend file -> Client sends 3101 -> Server sends UUID
+
+ - 3102 : File Refuse
+          This si sent by the server when it is unwilling to receive a frame.  There can be any reason for this, but the most likely is that the client is
+          attempting to send a file that the server is not expecting, e.g. the client wants to send a frame but the server never asked them to render one.
+
+ - 3103 : Render Request
+          This is sent by the server to the client when they want the client to render a frame.  The transaction goes like this:
+
+          Server sends 3103 -> Client sends 3103 -> Server sends project UUID -> Client sends 3103 (if they have that file) -> Server sends frame -> Client sends 3103
+
+ - 3104 : Render Refuse
+          This is sent by the client and server.  The client sends this when the client is not willing to render.  The server can send this as a response to say
+          'We hear you, and we will not ask again.  You are still part of the queue'.  Otherwise, they would say 2202, to signify a termination of queue.
+
+ - 3105 : Finished
+          This is sent when either a file send request or render request is finished and approved.
+
+41XX Codes: Error Codes
+
+ - 4101 : Invalid Command
+          Sent by either client or server when the command that was sent previously was not recognized.
+
+Other Codes:
+
+ - {DBRENDOFFILESEQUENCE} : Sent in order to indicate that the file has finished being sent.
